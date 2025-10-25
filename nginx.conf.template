@@ -1,0 +1,63 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    # Upstream configuration - primary/backup based on ACTIVE_POOL
+    upstream backend {
+        # Primary server (active pool)
+        server ${PRIMARY_HOST}:${PRIMARY_PORT} max_fails=2 fail_timeout=5s;
+        
+        # Backup server (standby pool)
+        server ${BACKUP_HOST}:${BACKUP_PORT} backup;
+    }
+
+    # Health check and logging
+    log_format upstream_logging '[$time_local] $remote_addr - $request '
+                                'upstream: $upstream_addr '
+                                'status: $status '
+                                'pool: $upstream_http_x_app_pool '
+                                'release: $upstream_http_x_release_id';
+    
+    access_log /var/log/nginx/access.log upstream_logging;
+    error_log /var/log/nginx/error.log warn;
+
+    server {
+        listen 80;
+        server_name _;
+
+        # Proxy timeouts - tight for quick failover
+        proxy_connect_timeout 2s;
+        proxy_send_timeout 3s;
+        proxy_read_timeout 3s;
+        
+        # Retry configuration
+        proxy_next_upstream error timeout http_500 http_502 http_503 http_504;
+        proxy_next_upstream_tries 2;
+        proxy_next_upstream_timeout 10s;
+
+        location / {
+            proxy_pass http://backend;
+            
+            # Forward original headers
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            
+            # Preserve upstream headers (X-App-Pool, X-Release-Id)
+            # These are automatically forwarded by nginx
+            
+            # Add custom header for debugging
+            add_header X-Upstream-Address $upstream_addr always;
+        }
+
+        # Health check endpoint
+        location /healthz {
+            proxy_pass http://backend/healthz;
+            proxy_connect_timeout 1s;
+            proxy_read_timeout 1s;
+            access_log off;
+        }
+    }
+}
