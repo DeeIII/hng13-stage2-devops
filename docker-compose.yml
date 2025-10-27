@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Blue application instance
   app_blue:
