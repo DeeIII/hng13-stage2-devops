@@ -21,6 +21,12 @@ else
     exit 1
 fi
 
+# Remove default symlinks so we can write to mounted volume
+echo "Setting up logging..."
+rm -f /var/log/nginx/access.log /var/log/nginx/error.log
+touch /var/log/nginx/access.log
+touch /var/log/nginx/error.log
+
 # Process template with envsubst
 echo "Processing nginx.conf.template..."
 envsubst '${PRIMARY_HOST} ${PRIMARY_PORT} ${BACKUP_HOST} ${BACKUP_PORT}' \
