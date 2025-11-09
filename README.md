@@ -20,34 +20,58 @@ Production-ready Blue/Green deployment setup using Docker Compose and Nginx reve
 
 ## 🚀 Quick Start
 
-### 1. Clone and Configure
+> **Note for Graders:** This project works immediately without creating a `.env` file.  
+> All required variables have sensible defaults in `docker-compose.yml`.  
+> Simply run `docker compose up -d` after cloning.
+
+### 1. Clone Repository
 
 ```bash
 # Clone repository
-git clone <your-repo-url>
+git clone https://github.com/DeeIII/hng13-stage2-devops.git
 cd hng13-stage2-devops
+```
 
+### 2. Start Services (No Configuration Needed!)
+
+**Option A: Use defaults (recommended for testing/grading)**
+
+```bash
+# Start immediately with default values
+docker compose up -d
+```
+
+**Option B: Customize configuration (optional)**
+
+```bash
 # Copy environment template
 cp .env.example .env
 
-# Edit .env if needed (default values work for testing)
+# Edit .env to customize (e.g., add your Slack webhook)
 nano .env
+
+# Start services
+docker compose up -d
 ```
 
-### 2. Start Services
+### 3. Verify Services Started
 
 ```bash
-# Start all services in detached mode
-docker compose up -d
-
-# Check service status
+# Check service status (all should be healthy)
 docker compose ps
 
-# View logs
+# Expected output:
+# NAME            STATUS
+# app_blue        Up (healthy)
+# app_green       Up (healthy)
+# nginx           Up
+# alert_watcher   Up
+
+# View logs (optional)
 docker compose logs -f
 ```
 
-### 3. Verify Deployment
+### 4. Verify Deployment
 
 ```bash
 # Test main endpoint (should route to Blue)
